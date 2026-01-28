@@ -52,8 +52,8 @@ export default function EditorLayout({ children }: { children: React.ReactNode }
             >
                 <div className="flex items-center justify-between p-4 border-b border-border">
                     <div className="flex items-center gap-3 group/logo cursor-pointer select-none">
-                        <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
-                            <span className="text-accent text-xl font-black italic tracking-tighter">M</span>
+                        <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-accent/5 p-1.5 border border-border/50">
+                            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
                         </div>
                         <div className="flex flex-col">
                             <span className="font-black tracking-tighter text-lg leading-none bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">

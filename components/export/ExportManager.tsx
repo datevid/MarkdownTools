@@ -45,7 +45,7 @@ export default function ExportManager() {
         // @ts-ignore - html2pdf doesn't have official types for this usage
         const html2pdf = (await import('html2pdf.js')).default;
 
-        const element = document.querySelector('.prose');
+        const element = document.querySelector('.prose') as HTMLElement | null;
         if (!element) {
             addNotification('No se encontró contenido para exportar', 'error');
             return;
@@ -54,15 +54,15 @@ export default function ExportManager() {
         const opt = {
             margin: 1,
             filename: `${activeFile.name.replace('.md', '')}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
+            image: { type: 'jpeg' as const, quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            jsPDF: { unit: 'in' as const, format: 'letter' as const, orientation: 'portrait' as const }
         };
 
         addNotification('Generando PDF...', 'info');
 
         try {
-            await html2pdf().set(opt).from(element).save();
+            await html2pdf().set(opt as any).from(element as any).save();
             addNotification('PDF generado con éxito', 'success');
         } catch (error) {
             console.error('PDF generation error:', error);

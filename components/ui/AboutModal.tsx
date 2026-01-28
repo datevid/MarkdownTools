@@ -31,8 +31,8 @@ export default function AboutModal({ isOpen, onClose }: AboutModalProps) {
                         {/* Header */}
                         <div className="p-6 border-b border-border flex items-center justify-between bg-gradient-to-r from-accent/10 to-transparent">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-accent/20 flex items-center justify-center">
-                                    <span className="text-accent text-3xl font-black italic tracking-tighter">M</span>
+                                <div className="w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center">
+                                    <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
                                 </div>
                                 <div>
                                     <h2 className="text-2xl font-bold tracking-tight">Markdown Tools</h2>
