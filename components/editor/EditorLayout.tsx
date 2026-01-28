@@ -116,7 +116,10 @@ export default function EditorLayout({ children }: { children: React.ReactNode }
                                         addNotification(`Descargando "${fileToDownload.name}"`, 'info');
                                     }
                                 }}
-                                className="absolute right-10 top-1 p-2 opacity-0 group-hover:opacity-100 hover:bg-accent/10 text-muted-foreground hover:text-accent rounded-full transition-all cursor-pointer"
+                                className={cn(
+                                    "absolute right-10 top-1 p-2 hover:bg-accent/10 text-muted-foreground hover:text-accent rounded-full transition-all cursor-pointer",
+                                    activeFileId === file.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                                )}
                                 title="Descargar MD"
                             >
                                 <Download size={14} />
@@ -126,7 +129,10 @@ export default function EditorLayout({ children }: { children: React.ReactNode }
                                     e.stopPropagation();
                                     setDeleteConfirm({ open: true, fileId: file.id, fileName: file.name });
                                 }}
-                                className="absolute right-2 top-1 p-2 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-full transition-all cursor-pointer"
+                                className={cn(
+                                    "absolute right-2 top-1 p-2 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-full transition-all cursor-pointer",
+                                    activeFileId === file.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                                )}
                                 title="Eliminar archivo"
                             >
                                 <X size={14} />
@@ -165,6 +171,16 @@ export default function EditorLayout({ children }: { children: React.ReactNode }
                         <Plus size={14} />
                         <span>Nuevo archivo</span>
                     </button>
+
+                    {files.length > 0 && (
+                        <button
+                            onClick={() => setDeleteAllConfirm(true)}
+                            className="flex items-center gap-2 w-full px-2 py-1.5 text-sm text-destructive/70 hover:text-destructive hover:bg-destructive/10 transition-colors rounded-md cursor-pointer"
+                        >
+                            <Trash2 size={14} />
+                            <span>Borrar todos los archivos</span>
+                        </button>
+                    )}
 
                     <button
                         onClick={() => setBindingModalOpen(true)}

@@ -238,10 +238,10 @@ export default function HybridEditor({ initialValue, onChange }: HybridEditorPro
             {splitView ? (
                 <div className="flex w-full h-full divide-x divide-border overflow-hidden">
                     {/* Editor Side */}
-                    <div className="flex-1 h-full p-8 overflow-y-auto bg-card/5 relative flex flex-col">
+                    <div className="flex-1 h-full p-8 py-2 overflow-y-auto bg-card/5 relative flex flex-col">
                         <Toolbar onAction={handleAction} className="mb-4 sticky top-0 z-20" />
                         <div className="relative flex-1">
-                            <div className="absolute -top-6 left-0 text-[10px] uppercase tracking-widest text-muted-foreground opacity-50 select-none">
+                            <div className="absolute -top-2 left-0 text-[10px] uppercase tracking-widest text-muted-foreground opacity-50 select-none">
                                 Editor
                             </div>
                             <button
