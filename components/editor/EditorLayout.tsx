@@ -145,14 +145,6 @@ export default function EditorLayout({ children }: { children: React.ReactNode }
                     <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Herramientas</div>
 
                     <button
-                        onClick={() => setUploadModalOpen(true)}
-                        className="flex items-center gap-2 w-full px-2 py-1.5 text-sm rounded-md transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"
-                    >
-                        <Upload size={14} />
-                        <span>Cargar archivos</span>
-                    </button>
-
-                    <button
                         onClick={() => {
                             const newId = Date.now().toString();
                             const newFile = {
@@ -172,10 +164,18 @@ export default function EditorLayout({ children }: { children: React.ReactNode }
                         <span>Nuevo archivo</span>
                     </button>
 
+                    <button
+                        onClick={() => setUploadModalOpen(true)}
+                        className="flex items-center gap-2 w-full px-2 py-1.5 text-sm rounded-md transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"
+                    >
+                        <Upload size={14} />
+                        <span>Cargar archivos</span>
+                    </button>
+
                     {files.length > 0 && (
                         <button
                             onClick={() => setDeleteAllConfirm(true)}
-                            className="flex items-center gap-2 w-full px-2 py-1.5 text-sm text-destructive/70 hover:text-destructive hover:bg-destructive/10 transition-colors rounded-md cursor-pointer"
+                            className="flex items-center gap-2 w-full px-2 py-1.5 text-sm rounded-md transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"
                         >
                             <Trash2 size={14} />
                             <span>Borrar todos los archivos</span>
@@ -184,7 +184,7 @@ export default function EditorLayout({ children }: { children: React.ReactNode }
 
                     <button
                         onClick={() => setBindingModalOpen(true)}
-                        className="flex items-center gap-2 w-full px-2 py-1.5 text-sm font-bold text-accent hover:bg-accent/10 mt-2 transition-colors rounded-md border-2 border-accent/20 hover:border-accent"
+                        className="flex items-center gap-2 w-full px-2 py-1.5 text-sm font-bold text-accent hover:bg-accent/10 mt-2 transition-colors rounded-md "
                     >
                         <Link size={14} />
                         <span>Binding Tool</span>
