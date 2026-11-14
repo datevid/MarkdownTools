@@ -1,126 +1,187 @@
 'use client';
 
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Linkedin, Github, ExternalLink, Heart, Code2, Cpu, Zap } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React, { useId } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Code2, Cpu, Github, Heart, Linkedin, ShieldCheck, X, Zap } from 'lucide-react';
+import ModalContainer from '@/components/ui/ModalContainer';
+import { AUTHOR_INFO } from '@/lib/siteConfig';
 
-interface AboutModalProps {
+/**
+ * Props for the AboutModal application information dialog.
+ */
+export interface AboutModalProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
+const ENGINE_HIGHLIGHTS = [
+    'Unified',
+    'KaTeX',
+    'Mermaid',
+    'Web Worker',
+    'LocalStorage',
+] as const;
+
+const INTERNAL_ROUTES = [
+    { href: '/guia-markdown-mermaid-katex', label: 'Guía técnica' },
+    { href: '/sobre-nosotros', label: 'Sobre nosotros' },
+    { href: '/contacto', label: 'Contacto' },
+    { href: '/aviso-legal', label: 'Privacidad y aviso legal' },
+] as const;
+
+/**
+ * Accessible About dialog highlighting the Markdown Tools v2.0.0 architecture, author, and site routes.
+ */
 export default function AboutModal({ isOpen, onClose }: AboutModalProps) {
+    const titleId = useId();
+
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={onClose}
-                        className="absolute inset-0 bg-background/80 backdrop-blur-sm"
-                    />
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        className="relative w-full max-w-2xl bg-card border border-border shadow-2xl rounded-3xl overflow-hidden"
-                    >
-                        {/* Header */}
-                        <div className="p-6 border-b border-border flex items-center justify-between bg-gradient-to-r from-accent/10 to-transparent">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center">
-                                    <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
-                                </div>
-                                <div>
-                                    <h2 className="text-2xl font-bold tracking-tight">Markdown Tools</h2>
-                                    <p className="text-xs text-muted-foreground mt-0.5">
-                                        El Editor Markdown Avanzado para Documentación Técnica.
-                                    </p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={onClose}
-                                className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground"
-                            >
-                                <X size={20} />
-                            </button>
+        <ModalContainer
+            isOpen={isOpen}
+            onClose={onClose}
+            ariaLabelledBy={titleId}
+            maxWidthClassName="max-w-2xl"
+            zIndexClassName="z-[100]"
+        >
+            <div className="flex items-center justify-between gap-3 border-b border-border bg-gradient-to-r from-accent/10 to-transparent p-4 sm:p-6">
+                <div className="flex min-w-0 items-center gap-3.5">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-background p-1">
+                        <Image
+                            src="/logo.png"
+                            width={64}
+                            height={64}
+                            alt="Logo de Markdown Tools"
+                            className="h-full w-full object-contain"
+                        />
+                    </div>
+                    <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <h2 id={titleId} className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                                Markdown Tools
+                            </h2>
+                            <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[11px] font-bold text-accent-text">
+                                v2.0.0
+                            </span>
                         </div>
-
-                        <div className="p-8 space-y-6">
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="p-4 bg-muted/50 rounded-2xl border border-border/50">
-                                    <div className="flex items-center gap-2 text-accent mb-2">
-                                        <Zap size={18} />
-                                        <span className="font-semibold">Misión</span>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground leading-relaxed">
-                                        Simplificar la creación de documentación compleja mediante herramientas de unión de archivos y un entorno de escritura sin distracciones.
-                                    </p>
-                                </div>
-                                <div className="p-4 bg-muted/50 rounded-2xl border border-border/50">
-                                    <div className="flex items-center gap-2 text-accent mb-2">
-                                        <Cpu size={18} />
-                                        <span className="font-semibold">Tecnología</span>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground leading-relaxed">
-                                        Construido con Next.js, Framer Motion y un motor de renderizado optimizado para el máximo rendimiento.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4 pt-2">
-                                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-widest">
-                                    <Code2 size={14} />
-                                    <span>Desarrollado por</span>
-                                </div>
-                                <div className="flex items-center justify-between p-4 bg-accent/5 rounded-2xl border border-accent/10">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-accent/20 rounded-full flex items-center justify-center">
-                                            <Heart size={24} className="text-accent fill-accent/20" />
-                                        </div>
-                                        <div>
-                                            <div className="font-bold text-lg">David León Vilca</div>
-                                            <div className="text-sm text-muted-foreground">Software Developer & Tech Enthusiast</div>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <a
-                                            href="https://www.linkedin.com/in/datevid/"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="p-3 bg-white hover:bg-white/90 text-[#0077b5] rounded-xl transition-all shadow-sm hover:scale-110 cursor-pointer"
-                                            title="Conectar en LinkedIn"
-                                        >
-                                            <Linkedin size={20} fill="currentColor" />
-                                        </a>
-                                        <a
-                                            href="https://github.com/datevid"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="p-3 bg-[#181717] hover:bg-[#181717]/90 text-white rounded-xl transition-all shadow-sm hover:scale-110 cursor-pointer"
-                                            title="Ver GitHub"
-                                        >
-                                            <Github size={20} />
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-muted/30 p-4 border-t border-border flex items-center justify-center gap-4 text-xs text-muted-foreground">
-                            <span>Markdown Tools v1.0.0</span>
-                            <span className="opacity-20">|</span>
-                            <a href="#" className="hover:text-foreground underline underline-offset-4">Privacidad</a>
-                            <span className="opacity-20">|</span>
-                            <a href="#" className="hover:text-foreground underline underline-offset-4">Contacto</a>
-                        </div>
-                    </motion.div>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            Editor Markdown Avanzado para Documentación Técnica, Fórmulas y Diagramas.
+                        </p>
+                    </div>
                 </div>
-            )}
-        </AnimatePresence>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    aria-label="Cerrar información de Markdown Tools"
+                    className="shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                >
+                    <X size={20} aria-hidden="true" />
+                </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-border bg-muted/40 p-4">
+                        <div className="mb-2 flex items-center gap-2 text-accent-text">
+                            <Zap size={18} aria-hidden="true" />
+                            <span className="text-sm font-semibold">Misión</span>
+                        </div>
+                        <p className="text-sm leading-relaxed text-muted-foreground">
+                            Simplificar la creación de documentación técnica mediante edición fluida, vista previa instantánea y fusión modular de documentos sin salir del navegador.
+                        </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-border bg-muted/40 p-4">
+                        <div className="mb-2 flex items-center gap-2 text-accent-text">
+                            <Cpu size={18} aria-hidden="true" />
+                            <span className="text-sm font-semibold">Arquitectura</span>
+                        </div>
+                        <p className="text-sm leading-relaxed text-muted-foreground">
+                            Procesamiento local con aislamiento de renderizado, persistencia automática en el navegador y cero envío de tus borradores a servidores externos.
+                        </p>
+                    </div>
+                </div>
+
+                <div>
+                    <div className="mb-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        <ShieldCheck size={14} aria-hidden="true" />
+                        <span>Motores y tecnologías integradas</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {ENGINE_HIGHLIGHTS.map((item) => (
+                            <span
+                                key={item}
+                                className="rounded-lg border border-border bg-muted/60 px-2.5 py-1 font-mono text-xs font-semibold text-foreground"
+                            >
+                                {item}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="space-y-3 pt-1">
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        <Code2 size={14} aria-hidden="true" />
+                        <span>Desarrollado por</span>
+                    </div>
+                    <div className="flex flex-col gap-4 rounded-2xl border border-accent/20 bg-accent/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 items-center gap-3.5">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent-text">
+                                <Heart size={20} aria-hidden="true" />
+                            </div>
+                            <div className="min-w-0">
+                                <div className="truncate text-base font-bold text-foreground">
+                                    {AUTHOR_INFO.name}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                    {AUTHOR_INFO.role}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <a
+                                href={AUTHOR_INFO.linkedin}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="Perfil de LinkedIn de David León Vilca"
+                                title="Conectar en LinkedIn"
+                                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-background text-accent-text shadow-xs transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
+                                <Linkedin size={18} aria-hidden="true" />
+                            </a>
+                            <a
+                                href={AUTHOR_INFO.github}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="Perfil de GitHub de David León Vilca"
+                                title="Ver perfil en GitHub"
+                                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-background text-foreground shadow-xs transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
+                                <Github size={18} aria-hidden="true" />
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="border-t border-border bg-muted/30 px-4 py-3.5 sm:px-6">
+                <nav
+                    aria-label="Enlaces institucionales y documentación"
+                    className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted-foreground"
+                >
+                    <span className="font-semibold text-foreground">Markdown Tools v2.0.0</span>
+                    {INTERNAL_ROUTES.map((route) => (
+                        <Link
+                            key={route.href}
+                            href={route.href}
+                            onClick={onClose}
+                            className="font-medium underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                        >
+                            {route.label}
+                        </Link>
+                    ))}
+                </nav>
+            </div>
+        </ModalContainer>
     );
 }

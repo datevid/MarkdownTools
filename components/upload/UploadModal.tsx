@@ -1,193 +1,331 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
-import { X, Upload, FileText, Check } from 'lucide-react';
-import { useAppStore } from '@/lib/store';
+import React, { useEffect, useId, useRef, useState } from 'react';
+import { Check, FileText, Upload, X } from 'lucide-react';
+import ModalContainer from '@/components/ui/ModalContainer';
+import {
+    createUniqueFileName,
+    HEAVY_FILE_BYTES,
+    isSupportedMarkdownFile,
+} from '@/components/ui/fileHelpers';
+import { useAppStore, type FileNode } from '@/lib/store';
+import { cn, formatBytes, generateId, getUtf8ByteLength } from '@/lib/utils';
 
-interface UploadModalProps {
+/**
+ * Props for the UploadModal file-import dialog.
+ */
+export interface UploadModalProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
+interface UploadedFileSummary {
+    name: string;
+    bytes: number;
+}
+
+/**
+ * Accessible upload modal supporting drag-and-drop and multi-file import for Markdown documents.
+ */
 export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
-    const [isDragging, setIsDragging] = useState(false);
-    const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+    const titleId = useId();
+
+    return (
+        <ModalContainer
+            isOpen={isOpen}
+            onClose={onClose}
+            ariaLabelledBy={titleId}
+            maxWidthClassName="max-w-lg"
+            zIndexClassName="z-50"
+        >
+            <UploadModalBody titleId={titleId} onClose={onClose} />
+        </ModalContainer>
+    );
+}
+
+function UploadModalBody({
+    titleId,
+    onClose,
+}: {
+    titleId: string;
+    onClose: () => void;
+}) {
+    const dontShowSwitchId = useId();
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const { addFile, setActiveFileId, addNotification } = useAppStore();
+    const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [uploadedFiles, setUploadedFiles] = useState<UploadedFileSummary[]>([]);
 
-    const MAX_RECOMMENDED_SIZE = 2 * 1024 * 1024; // 2MB
-    const MAX_WARNING_SIZE = 5 * 1024 * 1024; // 5MB
+    const {
+        files,
+        addFile,
+        setActiveFileId,
+        addNotification,
+        dontShowUploadOnStartup,
+        setDontShowUploadOnStartup,
+    } = useAppStore();
 
-    const handleFiles = async (files: FileList) => {
-        const newUploadedFiles: string[] = [];
+    useEffect(() => {
+        return () => {
+            if (closeTimerRef.current !== null) {
+                clearTimeout(closeTimerRef.current);
+                closeTimerRef.current = null;
+            }
+        };
+    }, []);
 
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            if (file.name.endsWith('.md') || file.name.endsWith('.markdown')) {
-                if (file.size > MAX_WARNING_SIZE) {
-                    addNotification(`Archivo "${file.name}" es muy pesado (${(file.size / 1024 / 1024).toFixed(2)}MB). Puede causar lag.`, 'error');
-                } else if (file.size > MAX_RECOMMENDED_SIZE) {
-                    addNotification(`Archivo "${file.name}" supera el tamaño recomendado para fluidez.`, 'info');
+    const clearPendingCloseTimer = () => {
+        if (closeTimerRef.current !== null) {
+            clearTimeout(closeTimerRef.current);
+            closeTimerRef.current = null;
+        }
+    };
+
+    const handleClose = () => {
+        clearPendingCloseTimer();
+        onClose();
+    };
+
+    const processFileList = async (fileList: FileList) => {
+        const currentNames = files.map((file) => file.name);
+        const imported: UploadedFileSummary[] = [];
+
+        for (let index = 0; index < fileList.length; index += 1) {
+            const rawFile = fileList[index];
+            if (!isSupportedMarkdownFile(rawFile)) {
+                addNotification(
+                    `Archivo "${rawFile.name}" no soportado. Usa formatos .md, .markdown o .txt.`,
+                    'error'
+                );
+                continue;
+            }
+
+            try {
+                const content = await rawFile.text();
+                const exactBytes = getUtf8ByteLength(content);
+                const uniqueName = createUniqueFileName(rawFile.name, currentNames);
+                currentNames.push(uniqueName);
+
+                if (exactBytes > HEAVY_FILE_BYTES) {
+                    addNotification(
+                        `"${uniqueName}" pesa ${formatBytes(exactBytes)} (> 2 MB). Considera dividirlo o gestionarlo con Binder / Binding Tool para mayor fluidez.`,
+                        'info'
+                    );
                 }
 
-                const content = await file.text();
-                const newFile = {
-                    id: Date.now().toString() + i,
-                    name: file.name,
-                    content: content,
-                    type: 'file' as const,
-                    parentId: null
+                const newFile: FileNode = {
+                    id: generateId('file'),
+                    name: uniqueName,
+                    content,
+                    type: 'file',
+                    parentId: null,
                 };
+
                 addFile(newFile);
                 setActiveFileId(newFile.id);
-                newUploadedFiles.push(file.name);
+                imported.push({ name: uniqueName, bytes: exactBytes });
+            } catch {
+                addNotification(
+                    `No se pudo leer el archivo "${rawFile.name}".`,
+                    'error'
+                );
             }
         }
 
-        if (newUploadedFiles.length > 0) {
-            addNotification(`Cargados ${newUploadedFiles.length} archivos con éxito`, 'success');
-        }
+        if (imported.length > 0) {
+            setUploadedFiles(imported);
+            addNotification(
+                imported.length === 1
+                    ? `Archivo "${imported[0].name}" cargado con éxito.`
+                    : `Cargados ${imported.length} archivos con éxito.`,
+                'success'
+            );
 
-        setUploadedFiles(newUploadedFiles);
-
-        // Auto-close after 1.5 seconds if files were uploaded
-        if (newUploadedFiles.length > 0) {
-            setTimeout(() => {
+            clearPendingCloseTimer();
+            closeTimerRef.current = setTimeout(() => {
+                closeTimerRef.current = null;
                 onClose();
-                setUploadedFiles([]);
-            }, 1500);
+            }, 1400);
         }
     };
 
-    const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault();
+    const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFiles = event.target.files;
+        if (selectedFiles && selectedFiles.length > 0) {
+            void processFileList(selectedFiles);
+        }
+        event.target.value = '';
+    };
+
+    const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
         setIsDragging(false);
-        handleFiles(e.dataTransfer.files);
-    };
-
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(true);
-    };
-
-    const handleDragLeave = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-    };
-
-    const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            handleFiles(e.target.files);
+        if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+            void processFileList(event.dataTransfer.files);
         }
     };
-
-    if (!isOpen) return null;
 
     return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-            onClick={onClose}
-        >
-            <div
-                onClick={(e) => e.stopPropagation()}
-                className="bg-background border-2 border-border rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
-            >
-                {/* Header */}
-                <div className="p-6 border-b border-border flex items-center justify-between bg-gradient-to-r from-accent/10 to-transparent">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
-                            <Upload size={20} className="text-accent" />
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-bold">Cargar Archivos</h2>
-                            <p className="text-xs text-muted-foreground mt-0.5">Markdown (.md, .markdown) • Máx. recomendado 2MB por archivo</p>
-                        </div>
+        <>
+            <div className="flex items-center justify-between gap-3 border-b border-border bg-gradient-to-r from-accent/10 to-transparent p-4 sm:p-6">
+                <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-accent-text">
+                        <Upload size={20} aria-hidden="true" />
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-muted rounded-lg transition-colors"
-                    >
-                        <X size={20} />
-                    </button>
-                </div>
-
-                {/* Content */}
-                <div className="p-6">
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".md,.markdown"
-                        multiple
-                        onChange={handleFileInput}
-                        className="hidden"
-                    />
-
-                    {/* Drop Zone */}
-                    <div
-                        onDrop={handleDrop}
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                        onClick={() => fileInputRef.current?.click()}
-                        className={`
-              border-3 border-dashed rounded-2xl p-12 text-center cursor-pointer
-              transition-all duration-200
-              ${isDragging
-                                ? 'border-accent bg-accent/10 scale-[1.02]'
-                                : 'border-border hover:border-accent/50 hover:bg-muted/30'
-                            }
-            `}
-                    >
-                        <div className="flex flex-col items-center gap-4">
-                            <div className={`
-                w-16 h-16 rounded-2xl flex items-center justify-center transition-all
-                ${isDragging ? 'bg-accent/20 scale-110' : 'bg-muted'}
-              `}>
-                                <Upload size={32} className={isDragging ? 'text-accent' : 'text-muted-foreground'} />
-                            </div>
-
-                            <div>
-                                <p className="text-lg font-semibold mb-1">
-                                    {isDragging ? '¡Suelta aquí!' : 'Arrastra archivos aquí'}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                    o haz clic para seleccionar
-                                </p>
-                            </div>
-
-                            <div className="flex flex-col items-center gap-1 text-[10px] text-muted-foreground">
-                                <span className="flex items-center gap-1"><FileText size={12} /> Formatos: .md, .markdown</span>
-                                <span className="opacity-70 font-medium">Nota: Archivos mayores a 5MB pueden degradar el rendimiento.</span>
-                            </div>
-                        </div>
+                    <div className="min-w-0">
+                        <h2 id={titleId} className="text-lg font-bold text-foreground sm:text-xl">
+                            Cargar Archivos
+                        </h2>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            Formatos .md, .markdown o .txt • Recomendado hasta 2 MB por archivo
+                        </p>
                     </div>
-
-                    {/* Uploaded Files List */}
-                    {uploadedFiles.length > 0 && (
-                        <div className="mt-4 space-y-2">
-                            <p className="text-sm font-medium text-muted-foreground">Archivos cargados:</p>
-                            {uploadedFiles.map((fileName, index) => (
-                                <div
-                                    key={index}
-                                    className="flex items-center gap-2 p-3 bg-accent/10 border border-accent/20 rounded-lg"
-                                >
-                                    <Check size={16} className="text-accent" />
-                                    <span className="text-sm font-medium truncate">{fileName}</span>
-                                </div>
-                            ))}
-                        </div>
-                    )}
                 </div>
-
-                {/* Footer */}
-                <div className="p-6 border-t border-border bg-muted/10">
-                    <button
-                        onClick={onClose}
-                        className="w-full px-4 py-3 border-2 border-border rounded-xl font-semibold hover:bg-muted transition-colors"
-                    >
-                        Cerrar
-                    </button>
-                </div>
+                <button
+                    type="button"
+                    onClick={handleClose}
+                    aria-label="Cerrar ventana de carga de archivos"
+                    className="shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                >
+                    <X size={20} aria-hidden="true" />
+                </button>
             </div>
-        </div>
+
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".md,.markdown,.txt"
+                    multiple
+                    onChange={handleFileInputChange}
+                    aria-label="Seleccionar archivos Markdown o texto plano"
+                    className="hidden"
+                />
+
+                <div
+                    role="button"
+                    tabIndex={0}
+                    onDrop={handleDrop}
+                    onDragOver={(event) => {
+                        event.preventDefault();
+                        setIsDragging(true);
+                    }}
+                    onDragLeave={(event) => {
+                        event.preventDefault();
+                        setIsDragging(false);
+                    }}
+                    onClick={() => fileInputRef.current?.click()}
+                    onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            fileInputRef.current?.click();
+                        }
+                    }}
+                    className={cn(
+                        'rounded-2xl border-2 border-dashed p-8 text-center transition-all duration-200 cursor-pointer sm:p-10',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                        isDragging
+                            ? 'scale-[1.01] border-accent bg-accent/10'
+                            : 'border-border hover:border-accent/60 hover:bg-muted/40'
+                    )}
+                >
+                    <div className="flex flex-col items-center gap-3.5">
+                        <div
+                            className={cn(
+                                'flex h-14 w-14 items-center justify-center rounded-2xl transition-colors',
+                                isDragging
+                                    ? 'bg-accent/20 text-accent-text'
+                                    : 'bg-muted text-muted-foreground'
+                            )}
+                        >
+                            <Upload size={28} aria-hidden="true" />
+                        </div>
+
+                        <div>
+                            <p className="text-base font-semibold text-foreground sm:text-lg">
+                                {isDragging ? '¡Suelta los archivos aquí!' : 'Arrastra archivos aquí'}
+                            </p>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                o haz clic para explorar tu equipo
+                            </p>
+                        </div>
+
+                        <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
+                            <span className="inline-flex items-center gap-1.5 font-medium">
+                                <FileText size={13} aria-hidden="true" />
+                                Compatibles: .md, .markdown, .txt
+                            </span>
+                            <span>
+                                Archivos mayores a 2 MB mostrarán aviso para gestionarlos en Binder.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {uploadedFiles.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                            Archivos cargados
+                        </p>
+                        {uploadedFiles.map((item) => (
+                            <div
+                                key={item.name}
+                                className="flex items-center justify-between gap-3 rounded-xl border border-accent/25 bg-accent/10 p-3"
+                            >
+                                <div className="flex min-w-0 items-center gap-2">
+                                    <Check size={16} aria-hidden="true" className="shrink-0 text-accent-text" />
+                                    <span className="truncate text-sm font-medium text-foreground">
+                                        {item.name}
+                                    </span>
+                                </div>
+                                <span className="shrink-0 text-xs font-mono text-muted-foreground">
+                                    {formatBytes(item.bytes)}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            <div className="space-y-3 border-t border-border bg-muted/20 p-4 sm:p-5">
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-border/80 bg-background/70 px-3.5 py-2.5">
+                    <label
+                        htmlFor={dontShowSwitchId}
+                        className="cursor-pointer select-none text-xs font-medium text-foreground sm:text-sm"
+                    >
+                        No mostrarme otra vez
+                    </label>
+                    <button
+                        id={dontShowSwitchId}
+                        type="button"
+                        role="switch"
+                        aria-checked={dontShowUploadOnStartup}
+                        onClick={() => setDontShowUploadOnStartup(!dontShowUploadOnStartup)}
+                        className={cn(
+                            'relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                            dontShowUploadOnStartup
+                                ? 'bg-accent'
+                                : 'bg-zinc-300 dark:bg-zinc-700'
+                        )}
+                    >
+                        <span
+                            aria-hidden="true"
+                            className={cn(
+                                'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-150',
+                                dontShowUploadOnStartup ? 'translate-x-5' : 'translate-x-0'
+                            )}
+                        />
+                    </button>
+                </div>
+
+                <button
+                    type="button"
+                    onClick={handleClose}
+                    className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                >
+                    Cerrar
+                </button>
+            </div>
+        </>
     );
 }

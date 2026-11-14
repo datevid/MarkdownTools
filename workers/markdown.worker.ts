@@ -1,14 +1,19 @@
-import { processMarkdown } from '../lib/markdown';
+import {
+    processMarkdown,
+    type MarkdownWorkerRequest,
+    type MarkdownWorkerResponse,
+} from '../lib/markdown';
 
-self.onmessage = async (e: MessageEvent) => {
-    const { content, id } = e.data;
-    console.log('[Worker] Processing content for id:', id);
+self.onmessage = async (event: MessageEvent<MarkdownWorkerRequest>) => {
+    const { id, content } = event.data;
     try {
         const html = await processMarkdown(content);
-        console.log('[Worker] Processing complete for id:', id);
-        self.postMessage({ html, id });
+        const response: MarkdownWorkerResponse = { id, html };
+        self.postMessage(response);
     } catch (error) {
-        console.error('[Worker] Error processing markdown:', error);
-        self.postMessage({ error: (error as Error).message, id });
+        const message =
+            error instanceof Error ? error.message : 'Error al procesar Markdown en el worker';
+        const response: MarkdownWorkerResponse = { id, error: message };
+        self.postMessage(response);
     }
 };

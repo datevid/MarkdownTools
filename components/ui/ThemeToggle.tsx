@@ -1,37 +1,55 @@
 'use client';
 
-import * as React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 
+/**
+ * Accessible Light/Dark theme toggle button safe against SSR hydration mismatch.
+ */
 export function ThemeToggle() {
-    const { theme, setTheme } = useTheme();
-    const [mounted, setMounted] = React.useState(false);
+    const { resolvedTheme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
 
-    React.useEffect(() => {
-        setMounted(true);
+    useEffect(() => {
+        const frameId = window.requestAnimationFrame(() => {
+            setMounted(true);
+        });
+        return () => window.cancelAnimationFrame(frameId);
     }, []);
 
     if (!mounted) {
         return (
-            <div className="w-9 h-9 rounded-md bg-muted animate-pulse" />
+            <button
+                type="button"
+                disabled
+                aria-label="Cargando selector de tema"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground opacity-60"
+            >
+                <span aria-hidden="true" className="h-4 w-4 rounded-full bg-muted-foreground/30" />
+            </button>
         );
     }
 
+    const isDark = resolvedTheme === 'dark';
+    const label = isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro';
+
     return (
         <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            type="button"
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            aria-label={label}
+            title={label}
             className={cn(
-                "p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground",
-                "flex items-center justify-center w-9 h-9"
+                'inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border/70 transition-colors cursor-pointer',
+                'text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
             )}
-            title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
         >
-            {theme === 'dark' ? (
-                <Sun size={18} />
+            {isDark ? (
+                <Sun size={18} aria-hidden="true" />
             ) : (
-                <Moon size={18} />
+                <Moon size={18} aria-hidden="true" />
             )}
         </button>
     );
