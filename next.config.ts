@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "export",
   turbopack: {
     resolveAlias: {
       "decode-named-character-reference":
@@ -8,27 +9,6 @@ const nextConfig: NextConfig = {
       "hast-util-from-html-isomorphic":
         "./node_modules/hast-util-from-html-isomorphic/index.js",
     },
-  },
-  async headers() {
-    return [
-      {
-        source: "/(.*)",
-        headers: [
-          {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
-          },
-          {
-            key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin",
-          },
-          {
-            key: "X-Frame-Options",
-            value: "SAMEORIGIN",
-          },
-        ],
-      },
-    ];
   },
 };
 

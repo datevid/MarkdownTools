@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/siteConfig';
 
+export const dynamic = 'force-static';
+
 /**
  * Generates robots.txt directives for search engine crawlers.
  */

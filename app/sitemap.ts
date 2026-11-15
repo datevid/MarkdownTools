@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next';
 import { absoluteUrl } from '@/lib/siteConfig';
 
+export const dynamic = 'force-static';
+
 /**
  * Generates sitemap.xml listing all indexable routes of Markdown Tools.
  */
