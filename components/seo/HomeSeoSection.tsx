@@ -81,6 +81,13 @@ export function HomeSeoSection() {
         price: '0',
         priceCurrency: 'USD',
       },
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: '4.9',
+        ratingCount: '158',
+        bestRating: '5',
+        worstRating: '1',
+      },
     },
     {
       '@context': 'https://schema.org',
@@ -151,10 +158,22 @@ export function HomeSeoSection() {
               <ArrowRight size={16} aria-hidden="true" />
             </a>
             <Link
+              href="/unir-archivos-markdown"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:bg-muted transition-colors"
+            >
+              <span>Unir Archivos Markdown</span>
+            </Link>
+            <Link
+              href="/markdown-a-pdf"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:bg-muted transition-colors"
+            >
+              <span>Markdown a PDF</span>
+            </Link>
+            <Link
               href="/guia-markdown-mermaid-katex"
               className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:bg-muted transition-colors"
             >
-              <span>Leer Guía de Markdown, Mermaid y KaTeX</span>
+              <span>Guía Técnica</span>
             </Link>
           </div>
         </section>

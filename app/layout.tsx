@@ -39,10 +39,23 @@ export const metadata: Metadata = {
     template: "%s | Markdown Tools",
   },
   description: SITE_DESCRIPTION,
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/icon.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icon.png", sizes: "512x512", type: "image/png" },
+    ],
+  },
   keywords: [
     "editor markdown online",
     "herramientas markdown",
     "unir archivos markdown",
+    "combinar markdown online",
+    "markdown a pdf",
+    "convertir markdown a pdf",
     "markdown mermaid online",
     "markdown katex latex",
     "vista previa markdown en tiempo real",
@@ -50,6 +63,7 @@ export const metadata: Metadata = {
     "editor documentación técnica",
     "markdown binder",
     "markdown tools",
+    "gfm preview online",
   ],
   authors: [{ name: "David León Vilca", url: "https://github.com/datevid" }],
   creator: "David León Vilca",
@@ -65,18 +79,18 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
     images: [
       {
-        url: "/logo.png",
-        width: 127,
-        height: 113,
-        alt: "Markdown Tools",
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Markdown Tools — Editor Markdown Online Gratis con Mermaid, KaTeX y Fusión",
       },
     ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    images: ["/logo.png"],
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,

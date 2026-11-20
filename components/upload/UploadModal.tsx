@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useId, useRef, useState } from 'react';
-import { Check, FileText, Upload, X } from 'lucide-react';
+import React, { useId, useRef, useState } from 'react';
+import { FileText, Upload, X } from 'lucide-react';
 import ModalContainer from '@/components/ui/ModalContainer';
 import {
     createUniqueFileName,
@@ -17,11 +17,6 @@ import { cn, formatBytes, generateId, getUtf8ByteLength } from '@/lib/utils';
 export interface UploadModalProps {
     isOpen: boolean;
     onClose: () => void;
-}
-
-interface UploadedFileSummary {
-    name: string;
-    bytes: number;
 }
 
 /**
@@ -52,48 +47,23 @@ function UploadModalBody({
 }) {
     const dontShowSwitchId = useId();
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [isDragging, setIsDragging] = useState(false);
-    const [uploadedFiles, setUploadedFiles] = useState<UploadedFileSummary[]>([]);
 
     const {
-        files,
-        addFile,
-        setActiveFileId,
-        addNotification,
         dontShowUploadOnStartup,
         setDontShowUploadOnStartup,
     } = useAppStore();
 
-    useEffect(() => {
-        return () => {
-            if (closeTimerRef.current !== null) {
-                clearTimeout(closeTimerRef.current);
-                closeTimerRef.current = null;
-            }
-        };
-    }, []);
-
-    const clearPendingCloseTimer = () => {
-        if (closeTimerRef.current !== null) {
-            clearTimeout(closeTimerRef.current);
-            closeTimerRef.current = null;
-        }
-    };
-
-    const handleClose = () => {
-        clearPendingCloseTimer();
-        onClose();
-    };
-
     const processFileList = async (fileList: FileList) => {
-        const currentNames = files.map((file) => file.name);
-        const imported: UploadedFileSummary[] = [];
+        const state = useAppStore.getState();
+        const currentNames = state.files.map((file) => file.name);
+        let importedCount = 0;
+        let lastImportedName = '';
 
         for (let index = 0; index < fileList.length; index += 1) {
             const rawFile = fileList[index];
             if (!isSupportedMarkdownFile(rawFile)) {
-                addNotification(
+                state.addNotification(
                     `Archivo "${rawFile.name}" no soportado. Usa formatos .md, .markdown o .txt.`,
                     'error'
                 );
@@ -107,7 +77,7 @@ function UploadModalBody({
                 currentNames.push(uniqueName);
 
                 if (exactBytes > HEAVY_FILE_BYTES) {
-                    addNotification(
+                    state.addNotification(
                         `"${uniqueName}" pesa ${formatBytes(exactBytes)} (> 2 MB). Considera dividirlo o gestionarlo con Binder / Binding Tool para mayor fluidez.`,
                         'info'
                     );
@@ -121,37 +91,32 @@ function UploadModalBody({
                     parentId: null,
                 };
 
-                addFile(newFile);
-                setActiveFileId(newFile.id);
-                imported.push({ name: uniqueName, bytes: exactBytes });
+                state.addFile(newFile);
+                state.setActiveFileId(newFile.id);
+                importedCount += 1;
+                lastImportedName = uniqueName;
             } catch {
-                addNotification(
+                state.addNotification(
                     `No se pudo leer el archivo "${rawFile.name}".`,
                     'error'
                 );
             }
         }
 
-        if (imported.length > 0) {
-            setUploadedFiles(imported);
-            addNotification(
-                imported.length === 1
-                    ? `Archivo "${imported[0].name}" cargado con éxito.`
-                    : `Cargados ${imported.length} archivos con éxito.`,
+        if (importedCount > 0) {
+            state.addNotification(
+                importedCount === 1
+                    ? `Archivo "${lastImportedName}" cargado con éxito.`
+                    : `Cargados ${importedCount} archivos con éxito.`,
                 'success'
             );
-
-            clearPendingCloseTimer();
-            closeTimerRef.current = setTimeout(() => {
-                closeTimerRef.current = null;
-                onClose();
-            }, 1400);
         }
     };
 
     const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFiles = event.target.files;
         if (selectedFiles && selectedFiles.length > 0) {
+            onClose();
             void processFileList(selectedFiles);
         }
         event.target.value = '';
@@ -160,8 +125,10 @@ function UploadModalBody({
     const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
         event.preventDefault();
         setIsDragging(false);
-        if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
-            void processFileList(event.dataTransfer.files);
+        const droppedFiles = event.dataTransfer.files;
+        if (droppedFiles && droppedFiles.length > 0) {
+            onClose();
+            void processFileList(droppedFiles);
         }
     };
 
@@ -183,7 +150,7 @@ function UploadModalBody({
                 </div>
                 <button
                     type="button"
-                    onClick={handleClose}
+                    onClick={onClose}
                     aria-label="Cerrar ventana de carga de archivos"
                     className="shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
                 >
@@ -261,30 +228,6 @@ function UploadModalBody({
                         </div>
                     </div>
                 </div>
-
-                {uploadedFiles.length > 0 && (
-                    <div className="mt-4 space-y-2">
-                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                            Archivos cargados
-                        </p>
-                        {uploadedFiles.map((item) => (
-                            <div
-                                key={item.name}
-                                className="flex items-center justify-between gap-3 rounded-xl border border-accent/25 bg-accent/10 p-3"
-                            >
-                                <div className="flex min-w-0 items-center gap-2">
-                                    <Check size={16} aria-hidden="true" className="shrink-0 text-accent-text" />
-                                    <span className="truncate text-sm font-medium text-foreground">
-                                        {item.name}
-                                    </span>
-                                </div>
-                                <span className="shrink-0 text-xs font-mono text-muted-foreground">
-                                    {formatBytes(item.bytes)}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                )}
             </div>
 
             <div className="space-y-3 border-t border-border bg-muted/20 p-4 sm:p-5">
@@ -320,7 +263,7 @@ function UploadModalBody({
 
                 <button
                     type="button"
-                    onClick={handleClose}
+                    onClick={onClose}
                     className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
                 >
                     Cerrar

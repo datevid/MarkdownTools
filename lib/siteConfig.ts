@@ -22,10 +22,30 @@ export const AUTHOR_INFO = {
 
 export const NAV_LINKS = [
   { href: '/', label: 'Editor' },
+  { href: '/unir-archivos-markdown', label: 'Unir Markdown' },
+  { href: '/markdown-a-pdf', label: 'Markdown a PDF' },
   { href: '/guia-markdown-mermaid-katex', label: 'Guía Técnica' },
   { href: '/sobre-nosotros', label: 'Sobre Nosotros' },
   { href: '/contacto', label: 'Contacto' },
   { href: '/aviso-legal', label: 'Aviso Legal' },
+] as const;
+
+export const TOOL_LINKS = [
+  {
+    href: '/unir-archivos-markdown',
+    title: 'Unir Archivos Markdown',
+    desc: 'Combina múltiples archivos .md en un documento maestro con Binding Tool.',
+  },
+  {
+    href: '/markdown-a-pdf',
+    title: 'Convertir Markdown a PDF',
+    desc: 'Exporta a PDF con soporte KaTeX, diagramas Mermaid y saltos de página editoriales.',
+  },
+  {
+    href: '/guia-markdown-mermaid-katex',
+    title: 'Guía de Sintaxis y Diagramas',
+    desc: 'Manual completo de GitHub Flavored Markdown, Mermaid.js y LaTeX KaTeX.',
+  },
 ] as const;
 
 export function absoluteUrl(path: string): string {

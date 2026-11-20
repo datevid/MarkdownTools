@@ -12,11 +12,27 @@ import { FileText, Plus, Upload, LayoutTemplate } from 'lucide-react';
 function TemplateDeepLinkSync() {
     const searchParams = useSearchParams();
     const templateParam = searchParams.get('template');
+    const actionParam = searchParams.get('action');
     const appliedTemplateRef = useRef<string | null>(null);
+    const appliedActionRef = useRef<string | null>(null);
     const hasHydrated = useAppStore((state) => state._hasHydrated);
 
     useEffect(() => {
-        if (!hasHydrated || !templateParam) return;
+        if (!hasHydrated) return;
+
+        if (actionParam && appliedActionRef.current !== actionParam) {
+            appliedActionRef.current = actionParam;
+            const state = useAppStore.getState();
+            if (actionParam === 'binding') {
+                state.setBindingModalOpen(true);
+            } else if (actionParam === 'upload') {
+                state.setUploadModalOpen(true);
+            } else if (actionParam === 'templates') {
+                state.setTemplatesOpen(true);
+            }
+        }
+
+        if (!templateParam) return;
         if (appliedTemplateRef.current === templateParam) return;
         appliedTemplateRef.current = templateParam;
 
@@ -54,7 +70,7 @@ function TemplateDeepLinkSync() {
             state.setActiveFileId(newId);
             state.addNotification(`Plantilla "${matchedTemplate.title}" cargada`, 'success');
         });
-    }, [hasHydrated, templateParam]);
+    }, [hasHydrated, templateParam, actionParam]);
 
     return null;
 }

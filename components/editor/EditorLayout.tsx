@@ -478,7 +478,6 @@ function SidebarContent({
  */
 export default function EditorLayout({ children }: { children: React.ReactNode }) {
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-    const [bindingModalOpen, setBindingModalOpen] = useState(false);
     const [aboutModalOpen, setAboutModalOpen] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState<{
         open: boolean;
@@ -505,6 +504,8 @@ export default function EditorLayout({ children }: { children: React.ReactNode }
         setTocOpen,
         uploadModalOpen,
         setUploadModalOpen,
+        bindingModalOpen,
+        setBindingModalOpen,
         dontShowUploadOnStartup,
         _hasHydrated,
         binderItems,
@@ -680,9 +681,19 @@ export default function EditorLayout({ children }: { children: React.ReactNode }
                     {!effectiveSidebarOpen && (
                         <Link
                             href="#workspace-editor"
-                            className="hidden lg:inline-flex items-center gap-2 shrink-0 rounded-lg px-1.5 py-1 text-sm font-extrabold tracking-tight text-foreground"
+                            className="hidden sm:inline-flex items-center gap-2 shrink-0 rounded-lg px-1.5 py-1 text-sm font-extrabold tracking-tight text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
-                            <span>Markdown Tools</span>
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-accent/10 p-0.5">
+                                <Image
+                                    src="/logo.png"
+                                    alt="Logo de Markdown Tools"
+                                    width={22}
+                                    height={22}
+                                    className="h-full w-full object-contain"
+                                    priority
+                                />
+                            </span>
+                            <span className="hidden md:inline">Markdown Tools</span>
                         </Link>
                     )}
 

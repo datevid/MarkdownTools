@@ -39,6 +39,7 @@ export interface AppState {
     shortcutsOpen: boolean;
     tocOpen: boolean;
     uploadModalOpen: boolean;
+    bindingModalOpen: boolean;
     dontShowUploadOnStartup: boolean;
     binderItems: string[];
     focusMode: boolean;
@@ -56,6 +57,7 @@ export interface AppState {
     setShortcutsOpen: (open: boolean) => void;
     setTocOpen: (open: boolean) => void;
     setUploadModalOpen: (open: boolean) => void;
+    setBindingModalOpen: (open: boolean) => void;
     setDontShowUploadOnStartup: (dontShow: boolean) => void;
     setFocusMode: (enabled: boolean) => void;
     setTypewriterMode: (enabled: boolean) => void;
@@ -253,6 +255,7 @@ export const useAppStore = create<AppState>()(
             shortcutsOpen: false,
             tocOpen: false,
             uploadModalOpen: false,
+            bindingModalOpen: false,
             dontShowUploadOnStartup: false,
             binderItems: [],
             focusMode: false,
@@ -271,6 +274,7 @@ export const useAppStore = create<AppState>()(
             setShortcutsOpen: (open) => set({ shortcutsOpen: open }),
             setTocOpen: (open) => set({ tocOpen: open }),
             setUploadModalOpen: (open) => set({ uploadModalOpen: open }),
+            setBindingModalOpen: (open) => set({ bindingModalOpen: open }),
             setDontShowUploadOnStartup: (dontShow) => set({ dontShowUploadOnStartup: dontShow }),
             setFocusMode: (enabled) => set({ focusMode: enabled }),
             setTypewriterMode: (enabled) => set({ typewriterMode: enabled }),
